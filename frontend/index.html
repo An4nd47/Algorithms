@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AlgoLens — Algorithm Analysis Toolkit</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<div class="shell">
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">⬡ <span>Algo</span>Lens</div>
+      <div class="logo-sub">Algorithm Analysis Toolkit</div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">Tools</div>
+
+      <div class="nav-item active" data-page="overview">
+        <div class="icon">🏠</div>
+        Overview
+      </div>
+      <div class="nav-item" data-page="asymptotic">
+        <div class="icon">📈</div>
+        Asymptotic Analyzer
+        <span class="nav-badge">NEW</span>
+      </div>
+      <div class="nav-item" data-page="coordinate">
+        <div class="icon">🔷</div>
+        Coordinate Transform
+      </div>
+      <div class="nav-item" data-page="recursive">
+        <div class="icon">🔁</div>
+        Recursion Analyzer
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span class="status-dot"></span>
+      All systems operational
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="topbar-title">Overview</div>
+        <div class="topbar-crumb">AlgoLens / <span id="topbar-crumb">Dashboard</span></div>
+      </div>
+      <div style="font-size:12px; color: var(--muted); font-family: var(--font-code);">
+        v1.0 &nbsp;·&nbsp; 3 modules loaded
+      </div>
+    </div>
+
+    <!-- ═══════════ OVERVIEW PAGE ═══════════ -->
+    <div class="page active" id="page-overview">
+      <div class="section-head">
+        <div class="section-title">Algorithm Toolkit</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="hero-grid">
+        <div class="hero-card" onclick="switchPage('asymptotic')">
+          <span class="card-icon">📈</span>
+          <div class="card-title">Asymptotic Analyzer</div>
+          <div class="card-desc">Dynamically profiles any Python code snippet, measures empirical timing across growing input sizes, and fits the data to O(1) through O(2ⁿ) models.</div>
+          <span class="card-tag">Empirical · Regression</span>
+        </div>
+        <div class="hero-card" onclick="switchPage('coordinate')">
+          <span class="card-icon">🔷</span>
+          <div class="card-title">Coordinate Transformer</div>
+          <div class="card-desc">Apply 2D homogeneous coordinate transformations — translation, rotation, scaling, and combined — with live interactive canvas visualization.</div>
+          <span class="card-tag">Linear Algebra · Viz</span>
+        </div>
+        <div class="hero-card" onclick="switchPage('recursive')">
+          <span class="card-icon">🔁</span>
+          <div class="card-title">Recursion Analyzer</div>
+          <div class="card-desc">Parses Python AST to detect recursive functions, count recursive calls, inspect argument patterns, and estimate Big-O via heuristic rules.</div>
+          <span class="card-tag">AST · Heuristic</span>
+        </div>
+      </div>
+
+      <div class="readme-block">
+        <h3>📄 About this Toolkit</h3>
+        <p>AlgoLens is a frontend interface for three standalone Python algorithm analysis tools. Each tool is implemented in pure Python and exposed here as an interactive UI.</p>
+        <ul>
+          <li><strong>asymptotic_analysis.py</strong> — empirical complexity profiling via regression fitting</li>
+          <li><strong>coordinate_transformation.py</strong> — homogeneous matrix-based 2D transformations</li>
+          <li><strong>recursive_check.py</strong> — static AST-based recursion and complexity estimation</li>
+        </ul>
+      </div>
+
+      <div class="readme-block">
+        <h3>⚡ Quick Start</h3>
+        <p>Select a tool from the sidebar. Each tool has an input area and a results panel. For the Asymptotic Analyzer, paste any Python function or snippet and click <code>Run Analysis</code>. For Coordinate Transform, enter a point and choose a transformation type. For Recursion Analyzer, paste any Python code with functions.</p>
+      </div>
+
+      <!-- Big-O reference strip -->
+      <div style="margin-top: 8px;">
+        <div style="font-size:11px; color: var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Complexity Reference</div>
+        <div class="bigo-strip">
+          <div class="bigo-cell"><div class="label">Best</div><div class="val">O(1)</div></div>
+          <div class="bigo-cell"><div class="label">Great</div><div class="val">O(log n)</div></div>
+          <div class="bigo-cell"><div class="label">Good</div><div class="val">O(n)</div></div>
+          <div class="bigo-cell"><div class="label">Fair</div><div class="val">O(n log n)</div></div>
+          <div class="bigo-cell"><div class="label">Bad</div><div class="val">O(n²)</div></div>
+          <div class="bigo-cell"><div class="label">Horrible</div><div class="val">O(2ⁿ)</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ ASYMPTOTIC PAGE ═══════════ -->
+    <div class="page" id="page-asymptotic">
+      <div class="section-head">
+        <div class="section-title">Asymptotic Complexity Analyzer</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="tool-layout">
+        <!-- Input -->
+        <div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Code Input</div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-ghost" onclick="loadAsymptoticExample('linear')" style="padding:5px 10px; font-size:11px;">Linear</button>
+                <button class="btn btn-ghost" onclick="loadAsymptoticExample('quadratic')" style="padding:5px 10px; font-size:11px;">Quadratic</button>
+                <button class="btn btn-ghost" onclick="loadAsymptoticExample('log')" style="padding:5px 10px; font-size:11px;">Log</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <textarea id="asymp-code" placeholder="Paste your Python function or snippet here…
+
+Example:
+def bubble_sort(lst):
+    n = len(lst)
+    for i in range(n):
+        for j in range(n - i - 1):
+            if lst[j] > lst[j+1]:
+                lst[j], lst[j+1] = lst[j+1], lst[j]
+    return lst"></textarea>
+              <div class="input-row">
+                <div class="input-group">
+                  <div class="input-label">Max N Limit</div>
+                  <input type="number" id="asymp-maxn" value="10000" min="100" max="100000" />
+                </div>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-primary" onclick="runAsymptotic()">
+                  ▶ Run Analysis
+                </button>
+                <button class="btn btn-ghost" onclick="clearAsymptotic()">Clear</button>
+                <div id="asymp-spinner" style="display:none;"><div class="spinner"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Big-O highlight strip -->
+          <div class="bigo-strip" style="margin-top:16px;" id="asymp-bigo-strip">
+            <div class="bigo-cell" data-o="O(1)"><div class="label">O(1)</div><div class="val">—</div></div>
+            <div class="bigo-cell" data-o="O(log n)"><div class="label">O(log n)</div><div class="val">—</div></div>
+            <div class="bigo-cell" data-o="O(n)"><div class="label">O(n)</div><div class="val">—</div></div>
+            <div class="bigo-cell" data-o="O(n log n)"><div class="label">O(n log n)</div><div class="val">—</div></div>
+            <div class="bigo-cell" data-o="O(n^2)"><div class="label">O(n²)</div><div class="val">—</div></div>
+            <div class="bigo-cell" data-o="O(2^n)"><div class="label">O(2ⁿ)</div><div class="val">—</div></div>
+          </div>
+        </div>
+
+        <!-- Output -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Analysis Results</div>
+            <div id="asymp-result-tag" style="font-size:11px; color: var(--muted);">Waiting…</div>
+          </div>
+          <div class="panel-body">
+            <div class="result-box" id="asymp-output">
+              <div class="result-placeholder">Run an analysis to see results here.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ COORDINATE PAGE ═══════════ -->
+    <div class="page" id="page-coordinate">
+      <div class="section-head">
+        <div class="section-title">Coordinate Transformation</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="tool-layout">
+        <!-- Controls -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Transform Controls</div>
+          </div>
+          <div class="panel-body">
+            <div class="coord-controls">
+              <div class="input-group">
+                <div class="input-label">X Coordinate</div>
+                <input type="number" id="coord-x" value="3" step="0.5" />
+              </div>
+              <div class="input-group">
+                <div class="input-label">Y Coordinate</div>
+                <input type="number" id="coord-y" value="4" step="0.5" />
+              </div>
+            </div>
+
+            <div class="input-label" style="margin-bottom:10px;">Transformation Type</div>
+            <div class="transform-toggle">
+              <button class="toggle-btn active" data-tf="translation" onclick="setTransform('translation', this)">Translation</button>
+              <button class="toggle-btn" data-tf="rotation" onclick="setTransform('rotation', this)">Rotation</button>
+              <button class="toggle-btn" data-tf="scaling" onclick="setTransform('scaling', this)">Scaling</button>
+              <button class="toggle-btn" data-tf="combined" onclick="setTransform('combined', this)">Combined</button>
+            </div>
+
+            <!-- Translation params -->
+            <div id="tf-translation" class="coord-controls tf-params">
+              <div class="input-group"><div class="input-label">Translate X (tx)</div><input type="number" id="tx" value="2" step="0.5" /></div>
+              <div class="input-group"><div class="input-label">Translate Y (ty)</div><input type="number" id="ty" value="3" step="0.5" /></div>
+            </div>
+
+            <!-- Rotation params -->
+            <div id="tf-rotation" class="coord-controls tf-params" style="display:none;">
+              <div class="input-group" style="grid-column: span 2;"><div class="input-label">Angle (degrees)</div><input type="number" id="angle" value="45" step="5" /></div>
+            </div>
+
+            <!-- Scaling params -->
+            <div id="tf-scaling" class="coord-controls tf-params" style="display:none;">
+              <div class="input-group"><div class="input-label">Scale X (sx)</div><input type="number" id="sx" value="2" step="0.1" /></div>
+              <div class="input-group"><div class="input-label">Scale Y (sy)</div><input type="number" id="sy" value="2" step="0.1" /></div>
+            </div>
+
+            <!-- Combined params -->
+            <div id="tf-combined" class="tf-params" style="display:none;">
+              <div class="coord-controls">
+                <div class="input-group"><div class="input-label">Angle (degrees)</div><input type="number" id="c-angle" value="45" step="5" /></div>
+                <div class="input-group"><div class="input-label">Translate X</div><input type="number" id="c-tx" value="2" step="0.5" /></div>
+              </div>
+              <div class="coord-controls" style="margin-top:12px;">
+                <div class="input-group"><div class="input-label">Translate Y</div><input type="number" id="c-ty" value="1" step="0.5" /></div>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn btn-primary" onclick="applyTransform()">▶ Apply Transform</button>
+              <button class="btn btn-ghost" onclick="resetCoord()">Reset</button>
+            </div>
+
+            <!-- Explanation box -->
+            <div id="coord-explain" style="margin-top:20px; background:#0d0d14; border:1px solid var(--border); border-radius:10px; padding:16px; font-size:12px; color:var(--muted); line-height:1.8; display:none;"></div>
+
+            <!-- Matrix display -->
+            <div id="coord-matrix" style="margin-top:16px; font-family: var(--font-code); font-size:12px; display:none;">
+              <div style="color:var(--muted); font-size:10px; letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;">Transformation Matrix</div>
+              <div id="matrix-content" style="background:#0d0d14; border:1px solid var(--border); border-radius:8px; padding:12px; color: var(--accent); white-space:pre;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas viz -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Visualization</div>
+            <div style="font-size:11px; color:var(--muted);">
+              <span style="color:var(--accent);">●</span> Original &nbsp;
+              <span style="color:#f59e0b;">●</span> Transformed
+            </div>
+          </div>
+          <div class="panel-body">
+            <canvas id="coord-canvas" width="500" height="440"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ RECURSIVE PAGE ═══════════ -->
+    <div class="page" id="page-recursive">
+      <div class="section-head">
+        <div class="section-title">Recursion Analyzer</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="tool-layout">
+        <!-- Input -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Python Code</div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" onclick="loadRecursiveExample('fibonacci')" style="padding:5px 10px; font-size:11px;">Fibonacci</button>
+              <button class="btn btn-ghost" onclick="loadRecursiveExample('mergesort')" style="padding:5px 10px; font-size:11px;">Merge Sort</button>
+              <button class="btn btn-ghost" onclick="loadRecursiveExample('binarysearch')" style="padding:5px 10px; font-size:11px;">Binary Search</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <textarea id="rec-code" placeholder="Paste Python code with functions here…
+
+                Example:
+                def fibonacci(n):
+                    if n <= 1:
+                        return n
+                    return fibonacci(n-1) + fibonacci(n-2)" style="min-height:320px;"></textarea>
+            <div class="btn-row">
+              <button class="btn btn-purple" onclick="runRecursive()">▶ Analyze</button>
+              <button class="btn btn-ghost" onclick="document.getElementById('rec-code').value=''; document.getElementById('rec-output').innerHTML='<div class=&quot;result-placeholder&quot;>Run an analysis to see results.</div>'">Clear</button>
+              <div id="rec-spinner" style="display:none;"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Output -->
+        <div>
+          <div class="panel-header" style="background: var(--surface2); border: 1px solid var(--border); border-radius: 16px 16px 0 0; padding: 16px 20px;">
+            <div class="panel-title">Analysis Results</div>
+            <div id="rec-summary" style="font-size:11px; color:var(--muted);">—</div>
+          </div>
+          <div id="rec-output" style="padding-top:16px;">
+            <div class="result-placeholder" style="margin-top:80px; text-align:center; color:var(--muted); font-size:12px;">Run an analysis to see results.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
