@@ -40,6 +40,10 @@
         <div class="icon">🔁</div>
         Recursion Analyzer
       </div>
+      <div class="nav-item" data-page="traversal">
+        <div class="icon">🕸️</div>
+        Graph Traversals
+      </div>
     </nav>
 
     <div class="sidebar-footer">
@@ -86,6 +90,12 @@
           <div class="card-desc">Parses Python AST to detect recursive functions, count recursive calls, inspect argument patterns, and estimate Big-O via heuristic rules.</div>
           <span class="card-tag">AST · Heuristic</span>
         </div>
+        <div class="hero-card" onclick="switchPage('traversal')">
+          <span class="card-icon">🕸️</span>
+          <div class="card-title">Graph Traversals</div>
+          <div class="card-desc">Simulates pathfinding algorithms (BFS, DFS, Dijkstra, Best-First) and visually outputs paths and traversal progression on graphs.</div>
+          <span class="card-tag">Search · Pathfinding</span>
+        </div>
       </div>
 
       <div class="readme-block">
@@ -95,6 +105,7 @@
           <li><strong>asymptotic_analysis.py</strong> — empirical complexity profiling via regression fitting</li>
           <li><strong>coordinate_transformation.py</strong> — homogeneous matrix-based 2D transformations</li>
           <li><strong>recursive_check.py</strong> — static AST-based recursion and complexity estimation</li>
+          <li><strong>traversal/*.py</strong> — graph traversal algorithms (BFS, DFS, Dijkstra, Best-First)</li>
         </ul>
       </div>
 
@@ -315,7 +326,7 @@ def bubble_sort(lst):
             </div>
           </div>
         </div>
-
+        
         <!-- Output -->
         <div>
           <div class="panel-header" style="background: var(--surface2); border: 1px solid var(--border); border-radius: 16px 16px 0 0; padding: 16px 20px;">
@@ -324,6 +335,48 @@ def bubble_sort(lst):
           </div>
           <div id="rec-output" style="padding-top:16px;">
             <div class="result-placeholder" style="margin-top:80px; text-align:center; color:var(--muted); font-size:12px;">Run an analysis to see results.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ TRAVERSALS PAGE ═══════════ -->
+    <div class="page" id="page-traversal">
+      <div class="section-head">
+        <div class="section-title">Graph Traversals</div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="tool-layout">
+        <!-- Input -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Python Code</div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" onclick="loadTraversalExample('bfs')" style="padding:5px 10px; font-size:11px;">BFS</button>
+              <button class="btn btn-ghost" onclick="loadTraversalExample('dfs')" style="padding:5px 10px; font-size:11px;">DFS</button>
+              <button class="btn btn-ghost" onclick="loadTraversalExample('dijkstra')" style="padding:5px 10px; font-size:11px;">Dijkstra</button>
+              <button class="btn btn-ghost" onclick="loadTraversalExample('bestfirst')" style="padding:5px 10px; font-size:11px;">Best-First</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <textarea id="trav-code" placeholder="Select a traversal algorithm above to view Python code…" style="min-height:350px; font-family: var(--font-code); font-size: 13px;"></textarea>
+            <div class="btn-row">
+              <button class="btn btn-primary" onclick="runTraversal()">▶ Run Pathfinding</button>
+              <button class="btn btn-ghost" onclick="clearTraversal()">Clear</button>
+              <div id="trav-spinner" style="display:none;"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Output -->
+        <div>
+          <div class="panel-header" style="background: var(--surface2); border: 1px solid var(--border); border-radius: 16px 16px 0 0; padding: 16px 20px;">
+            <div class="panel-title">Pathfinding Results</div>
+            <div id="trav-summary" style="font-size:11px; color:var(--muted);">—</div>
+          </div>
+          <div id="trav-output" style="padding:16px; background:var(--surface); border: 1px solid var(--border); border-top:none; border-radius: 0 0 16px 16px; min-height: 200px; font-family: var(--font-code); font-size: 13px; white-space: pre-wrap; color: var(--text);">
+            <div class="result-placeholder" style="margin-top:80px; text-align:center; color:var(--muted); font-size:12px;">Run a pathfinding strategy to see results.</div>
           </div>
         </div>
       </div>

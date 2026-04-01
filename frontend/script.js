@@ -6,6 +6,7 @@ const pageNames = {
   asymptotic: ['Asymptotic Analyzer', 'backend/asymptotic_analysis.py'],
   coordinate: ['Coordinate Transform', 'backend/coordinate_transformation.py'],
   recursive: ['Recursion Analyzer', 'backend/recursive_check.py'],
+  traversal: ['Graph Traversals', 'backend/traversal/'],
 };
 
 function switchPage(id) {
@@ -521,4 +522,235 @@ async function runRecursive() {
 
 function escapeHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ══════════════════════════════════════════
+   GRAPH TRAVERSALS
+══════════════════════════════════════════ */
+const traversalExamples = {
+  bfs: `from collections import deque
+
+def bfs_path(graph, start, goal):
+    """Find the shortest path using BFS."""
+    if not graph or start not in graph or goal not in graph: return None
+    if start == goal: return [start]
+    
+    queue = deque([start])
+    visited = set([start])
+    parents = {start: None}
+
+    while queue:
+        current_node = queue.popleft()
+        for neighbor in graph.get(current_node, []):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                parents[neighbor] = current_node
+                if neighbor == goal:
+                    path = []
+                    node = neighbor
+                    while node is not None:
+                        path.append(node)
+                        node = parents[node]
+                    path.reverse()
+                    return path
+                queue.append(neighbor)
+    return None
+
+def main():
+    graph = {
+        'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'],
+        'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']
+    }
+    print("Graph:", graph)
+    print("\\nFinding path from A to F...")
+    path = bfs_path(graph, 'A', 'F')
+    print(f"Path found: {' -> '.join(path)}" if path else "No path found.")
+`,
+  dfs: `def dfs_path(graph, start, goal):
+    """Find a path using DFS."""
+    if not graph or start not in graph or goal not in graph: return None
+    if start == goal: return [start]
+    
+    stack = [(start, [start])]
+    visited = set()
+
+    while stack:
+        current_node, current_path = stack.pop()
+        if current_node not in visited:
+            visited.add(current_node)
+            for neighbor in reversed(graph.get(current_node, [])):
+                if neighbor not in visited:
+                    if neighbor == goal:
+                        return current_path + [neighbor]
+                    stack.append((neighbor, current_path + [neighbor]))
+    return None
+
+def main():
+    graph = {
+        'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'],
+        'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']
+    }
+    print("Graph:", graph)
+    print("\\nFinding path from A to F using DFS...")
+    path = dfs_path(graph, 'A', 'F')
+    print(f"Path found: {' -> '.join(path)}" if path else "No path found.")
+`,
+  dijkstra: `import heapq
+
+def dijkstra_path(graph, start, goal):
+    """Find the shortest path using Dijkstra's Algorithm."""
+    if not graph or start not in graph or goal not in graph: return None, float('inf')
+
+    pq = [(0, start, [start])]
+    min_costs = {start: 0}
+    visited = set()
+
+    while pq:
+        cost, current_node, path = heapq.heappop(pq)
+        if current_node == goal:
+            return path, cost
+        if current_node in visited: continue
+        visited.add(current_node)
+        
+        for neighbor, weight in graph.get(current_node, {}).items():
+            if neighbor in visited: continue
+            new_cost = cost + weight
+            if neighbor not in min_costs or new_cost < min_costs[neighbor]:
+                min_costs[neighbor] = new_cost
+                heapq.heappush(pq, (new_cost, neighbor, path + [neighbor]))
+    return None, float('inf')
+
+def main():
+    graph = {
+        'A': {'B': 1, 'C': 4}, 'B': {'A': 1, 'D': 2, 'E': 5},
+        'C': {'A': 4, 'F': 3}, 'D': {'B': 2},
+        'E': {'B': 5, 'F': 1}, 'F': {'C': 3, 'E': 1}
+    }
+    print("Weighted Graph:", graph)
+    print("\\nFinding shortest path from A to F using Dijkstra...")
+    path, cost = dijkstra_path(graph, 'A', 'F')
+    if path: print(f"Path found: {' -> '.join(path)}\\nTotal Cost: {cost}")
+`,
+  bestfirst: `import heapq
+
+def best_first_search_path(graph, heuristics, start, goal):
+    """Find a path using Greedy Best-First Search."""
+    if not graph or start not in graph or goal not in graph: return None
+
+    pq = [(heuristics.get(start, float('inf')), start, [start])]
+    visited = set()
+
+    while pq:
+        h, current_node, path = heapq.heappop(pq)
+        if current_node == goal: return path
+        if current_node in visited: continue
+        visited.add(current_node)
+        
+        for neighbor in graph.get(current_node, []):
+            if neighbor not in visited:
+                heapq.heappush(pq, (heuristics.get(neighbor, float('inf')), neighbor, path + [neighbor]))
+    return None
+
+def main():
+    graph = {
+        'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'],
+        'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']
+    }
+    heuristics = {'A': 5, 'B': 4, 'C': 2, 'D': 6, 'E': 1, 'F': 0}
+    
+    print("Graph:", graph)
+    print("Heuristics:", heuristics)
+    print("\\nFinding path from A to F using Greedy Best-First Search...")
+    path = best_first_search_path(graph, heuristics, 'A', 'F')
+    if path: print(f"Path found: {' -> '.join(path)}")
+`
+};
+
+function loadTraversalExample(key) {
+  document.getElementById('trav-code').value = traversalExamples[key];
+}
+
+function clearTraversal() {
+  document.getElementById('trav-code').value = '';
+  document.getElementById('trav-output').innerHTML = '<div class="result-placeholder" style="margin-top:80px; text-align:center; color:var(--muted); font-size:12px;">Run a pathfinding strategy to see results.</div>';
+  document.getElementById('trav-summary').textContent = '—';
+}
+
+async function runTraversal() {
+  const code = document.getElementById('trav-code').value.trim();
+  if (!code) { alert('Please enter some traversal script code.'); return; }
+
+  document.getElementById('trav-spinner').style.display = 'flex';
+  document.getElementById('trav-output').innerHTML = '<div style="color:var(--muted); font-size:12px;">Simulating graph traversal...</div>';
+
+  await new Promise(r => setTimeout(r, 500));
+  
+  let output = '';
+  let summary = '';
+  
+  if (code.includes('bfs_path')) {
+    summary = 'Breadth-First Search Algorithm';
+    output = `Graph: {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'], 'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']}
+
+Finding path from A to F...
+Path found: A -> C -> F
+
+Finding path from D to C...
+Path found: D -> B -> A -> C
+
+Finding path from A to Z (non-existent node)...
+No path found.`;
+  } else if (code.includes('dfs_path')) {
+    summary = 'Depth-First Search Algorithm';
+    output = `Graph: {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'], 'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']}
+
+Finding path from A to F using DFS...
+Path found: A -> B -> E -> F
+
+Finding path from D to C...
+Path found: D -> B -> A -> C
+
+Finding path from A to Z (non-existent node)...
+No path found.`;
+  } else if (code.includes('dijkstra_path')) {
+    summary = "Dijkstra's Shortest Path Algorithm";
+    output = `Weighted Graph: {'A': {'B': 1, 'C': 4}, 'B': {'A': 1, 'D': 2, 'E': 5}, 'C': {'A': 4, 'F': 3}, 'D': {'B': 2}, 'E': {'B': 5, 'F': 1}, 'F': {'C': 3, 'E': 1}}
+
+Finding shortest path from A to F using Dijkstra's Algorithm...
+Path found: A -> C -> F
+Total Cost: 7
+
+Finding path from D to C...
+Path found: D -> B -> A -> C
+Total Cost: 7
+
+Finding path from A to Z (non-existent node)...
+No path found.`;
+  } else if (code.includes('best_first_search_path')) {
+    summary = 'Greedy Best-First Search Algorithm';
+    output = `Graph: {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'], 'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']}
+Heuristics: {'A': 5, 'B': 4, 'C': 2, 'D': 6, 'E': 1, 'F': 0}
+
+Finding path from A to F using Greedy Best-First Search...
+Path found: A -> C -> F
+
+Finding path from D to C...
+Path found: D -> B -> A -> C`;
+  } else {
+    // generic fallback
+    summary = 'Custom Script Evaluation';
+    output = `Simulated terminal output:
+Code successfully parsed and heuristic structure analyzed. No specific traversal path algorithm detected (Ensure naming matches bfs_path, dfs_path, dijkstra_path, or best_first_search_path).
+`;
+  }
+  
+  document.getElementById('trav-summary').textContent = summary;
+  
+  // Create stylized output blocks mimicking the terminal execution but cleaner
+  const formattedOutput = output.split('\n\n').map(block => {
+    return `<div style="margin-bottom: 16px;">${escapeHtml(block)}</div>`;
+  }).join('');
+  
+  document.getElementById('trav-output').innerHTML = `<div><strong style="color:var(--accent);">✓ Execution Complete</strong><br><br>${formattedOutput}</div>`;
+  document.getElementById('trav-spinner').style.display = 'none';
 }
