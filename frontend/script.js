@@ -527,230 +527,477 @@ function escapeHtml(s) {
 /* ══════════════════════════════════════════
    GRAPH TRAVERSALS
 ══════════════════════════════════════════ */
-const traversalExamples = {
-  bfs: `from collections import deque
+let currentTraversalAlg = 'bfs';
 
-def bfs_path(graph, start, goal):
-    """Find the shortest path using BFS."""
-    if not graph or start not in graph or goal not in graph: return None
-    if start == goal: return [start]
-    
-    queue = deque([start])
-    visited = set([start])
-    parents = {start: None}
+function handleGraphDirectionChange() {
+    const isDirected = document.getElementById('graph-direction').value === 'directed';
+    const arrow = isDirected ? '⟶' : '⟷';
+    document.querySelectorAll('.builder-arrow').forEach(span => {
+        if (span.textContent === '⟶' || span.textContent === '⟷') {
+            span.textContent = arrow;
+        }
+    });
+}
 
-    while queue:
-        current_node = queue.popleft()
-        for neighbor in graph.get(current_node, []):
-            if neighbor not in visited:
-                visited.add(neighbor)
-                parents[neighbor] = current_node
-                if neighbor == goal:
-                    path = []
-                    node = neighbor
-                    while node is not None:
-                        path.append(node)
-                        node = parents[node]
-                    path.reverse()
-                    return path
-                queue.append(neighbor)
-    return None
+function addEdgeRow(u='', v='', w='') {
+    const list = document.getElementById('edge-list');
+    const row = document.createElement('div');
+    row.className = 'builder-row';
+    const isWeighted = currentTraversalAlg === 'dijkstra';
+    const dirEl = document.getElementById('graph-direction');
+    const isDirected = dirEl ? dirEl.value === 'directed' : false;
+    const arrow = isDirected ? '⟶' : '⟷';
+    row.innerHTML = `
+        <input type="text" class="edge-u" value="${u}" maxlength="1" placeholder="A">
+        <span class="builder-arrow" style="width:14px; text-align:center;">${arrow}</span>
+        <input type="text" class="edge-v" value="${v}" maxlength="1" placeholder="B">
+        <input type="number" class="weight-input edge-w" value="${w}" placeholder="Wt" style="display:${isWeighted ? 'block' : 'none'};">
+        <button class="btn-remove" onclick="this.parentElement.remove()" title="Delete Edge">🗑️</button>
+    `;
+    list.appendChild(row);
+}
 
-def main():
-    graph = {
-        'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'],
-        'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']
-    }
-    print("Graph:", graph)
-    print("\\nFinding path from A to F...")
-    path = bfs_path(graph, 'A', 'F')
-    print(f"Path found: {' -> '.join(path)}" if path else "No path found.")
-`,
-  dfs: `def dfs_path(graph, start, goal):
-    """Find a path using DFS."""
-    if not graph or start not in graph or goal not in graph: return None
-    if start == goal: return [start]
-    
-    stack = [(start, [start])]
-    visited = set()
+function addHeuristicRow(node='', val='') {
+    const list = document.getElementById('heuristic-list');
+    const row = document.createElement('div');
+    row.className = 'builder-row';
+    row.innerHTML = `
+        <input type="text" class="heur-node" value="${node}" maxlength="1" placeholder="A">
+        <span class="builder-arrow">:</span>
+        <input type="number" class="heur-val" value="${val}" placeholder="Value">
+        <button class="btn-remove" onclick="this.parentElement.remove()" title="Delete Heuristic">🗑️</button>
+    `;
+    list.appendChild(row);
+}
 
-    while stack:
-        current_node, current_path = stack.pop()
-        if current_node not in visited:
-            visited.add(current_node)
-            for neighbor in reversed(graph.get(current_node, [])):
-                if neighbor not in visited:
-                    if neighbor == goal:
-                        return current_path + [neighbor]
-                    stack.append((neighbor, current_path + [neighbor]))
-    return None
+function clearEdgesList() {
+    document.getElementById('edge-list').innerHTML = '';
+}
 
-def main():
-    graph = {
-        'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'],
-        'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']
-    }
-    print("Graph:", graph)
-    print("\\nFinding path from A to F using DFS...")
-    path = dfs_path(graph, 'A', 'F')
-    print(f"Path found: {' -> '.join(path)}" if path else "No path found.")
-`,
-  dijkstra: `import heapq
+function clearHeuristicsList() {
+    const hList = document.getElementById('heuristic-list');
+    if (hList) hList.innerHTML = '';
+}
 
-def dijkstra_path(graph, start, goal):
-    """Find the shortest path using Dijkstra's Algorithm."""
-    if not graph or start not in graph or goal not in graph: return None, float('inf')
+function updateEdgeWeightsVisibility() {
+    const isWeighted = currentTraversalAlg === 'dijkstra';
+    document.querySelectorAll('.weight-input').forEach(el => {
+        el.style.display = isWeighted ? 'block' : 'none';
+    });
+}
 
-    pq = [(0, start, [start])]
-    min_costs = {start: 0}
-    visited = set()
+function initGraphForm(type) {
+  document.getElementById('edge-list').innerHTML = '';
+  document.getElementById('heuristic-list').innerHTML = '';
+  if (type === 'weighted') {
+    addEdgeRow('A','B',1); addEdgeRow('A','C',4);
+    addEdgeRow('B','A',1); addEdgeRow('B','D',2); addEdgeRow('B','E',5);
+    addEdgeRow('C','A',4); addEdgeRow('C','F',3);
+    addEdgeRow('D','B',2);
+    addEdgeRow('E','B',5); addEdgeRow('E','F',1);
+    addEdgeRow('F','C',3); addEdgeRow('F','E',1);
+  } else {
+    addEdgeRow('A','B'); addEdgeRow('A','C');
+    addEdgeRow('B','A'); addEdgeRow('B','D'); addEdgeRow('B','E');
+    addEdgeRow('C','A'); addEdgeRow('C','F');
+    addEdgeRow('D','B');
+    addEdgeRow('E','B'); addEdgeRow('E','F');
+    addEdgeRow('F','C'); addEdgeRow('F','E');
+  }
+  
+  if (currentTraversalAlg === 'bestfirst') {
+    addHeuristicRow('A', 5); addHeuristicRow('B', 4);
+    addHeuristicRow('C', 2); addHeuristicRow('D', 6);
+    addHeuristicRow('E', 1); addHeuristicRow('F', 0);
+  }
+}
 
-    while pq:
-        cost, current_node, path = heapq.heappop(pq)
-        if current_node == goal:
-            return path, cost
-        if current_node in visited: continue
-        visited.add(current_node)
-        
-        for neighbor, weight in graph.get(current_node, {}).items():
-            if neighbor in visited: continue
-            new_cost = cost + weight
-            if neighbor not in min_costs or new_cost < min_costs[neighbor]:
-                min_costs[neighbor] = new_cost
-                heapq.heappush(pq, (new_cost, neighbor, path + [neighbor]))
-    return None, float('inf')
-
-def main():
-    graph = {
-        'A': {'B': 1, 'C': 4}, 'B': {'A': 1, 'D': 2, 'E': 5},
-        'C': {'A': 4, 'F': 3}, 'D': {'B': 2},
-        'E': {'B': 5, 'F': 1}, 'F': {'C': 3, 'E': 1}
-    }
-    print("Weighted Graph:", graph)
-    print("\\nFinding shortest path from A to F using Dijkstra...")
-    path, cost = dijkstra_path(graph, 'A', 'F')
-    if path: print(f"Path found: {' -> '.join(path)}\\nTotal Cost: {cost}")
-`,
-  bestfirst: `import heapq
-
-def best_first_search_path(graph, heuristics, start, goal):
-    """Find a path using Greedy Best-First Search."""
-    if not graph or start not in graph or goal not in graph: return None
-
-    pq = [(heuristics.get(start, float('inf')), start, [start])]
-    visited = set()
-
-    while pq:
-        h, current_node, path = heapq.heappop(pq)
-        if current_node == goal: return path
-        if current_node in visited: continue
-        visited.add(current_node)
-        
-        for neighbor in graph.get(current_node, []):
-            if neighbor not in visited:
-                heapq.heappush(pq, (heuristics.get(neighbor, float('inf')), neighbor, path + [neighbor]))
-    return None
-
-def main():
-    graph = {
-        'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'],
-        'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']
-    }
-    heuristics = {'A': 5, 'B': 4, 'C': 2, 'D': 6, 'E': 1, 'F': 0}
-    
-    print("Graph:", graph)
-    print("Heuristics:", heuristics)
-    print("\\nFinding path from A to F using Greedy Best-First Search...")
-    path = best_first_search_path(graph, heuristics, 'A', 'F')
-    if path: print(f"Path found: {' -> '.join(path)}")
-`
-};
-
-function loadTraversalExample(key) {
-  document.getElementById('trav-code').value = traversalExamples[key];
+function setAlgorithmMode(alg, btn) {
+  currentTraversalAlg = alg;
+  document.querySelectorAll('.alg-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  
+  const dynHeuristics = document.getElementById('dynamic-heuristics-ui');
+  
+  if (alg === 'dijkstra') {
+    if (dynHeuristics) dynHeuristics.style.display = 'none';
+    initGraphForm('weighted');
+  } else if (alg === 'bestfirst') {
+    if (dynHeuristics) dynHeuristics.style.display = 'block';
+    initGraphForm('unweighted');
+  } else {
+    if (dynHeuristics) dynHeuristics.style.display = 'none';
+    initGraphForm('unweighted');
+  }
+  updateEdgeWeightsVisibility();
 }
 
 function clearTraversal() {
-  document.getElementById('trav-code').value = '';
+  document.getElementById('edge-list').innerHTML = '';
+  if (document.getElementById('heuristic-list')) document.getElementById('heuristic-list').innerHTML = '';
+  document.getElementById('trav-start').value = 'A';
+  document.getElementById('trav-goal').value = 'F';
   document.getElementById('trav-output').innerHTML = '<div class="result-placeholder" style="margin-top:80px; text-align:center; color:var(--muted); font-size:12px;">Run a pathfinding strategy to see results.</div>';
   document.getElementById('trav-summary').textContent = '—';
 }
 
+// Pathfinding logic in JS
+function runBFS(jsGraph, start, goal) {
+  if (!jsGraph[start] || !jsGraph[goal]) return null;
+  if (start === goal) return [start];
+  let queue = [start];
+  let visited = new Set([start]);
+  let parents = { [start]: null };
+  while (queue.length > 0) {
+    let current = queue.shift();
+    for (let neighbor of jsGraph[current] || []) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        parents[neighbor] = current;
+        if (neighbor === goal) {
+          let path = []; let node = neighbor;
+          while (node !== null) { path.push(node); node = parents[node]; }
+          return path.reverse();
+        }
+        queue.push(neighbor);
+      }
+    }
+  }
+}
+
+function drawGraphSimulator(canvasId, graph, path, isWeighted) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Extract all unique nodes
+    const nodes = new Set(Object.keys(graph));
+    for (let u in graph) {
+        if (isWeighted) {
+            for (let v in graph[u]) nodes.add(v);
+        } else {
+            for (let v of graph[u]) nodes.add(v);
+        }
+    }
+    const nodeArr = Array.from(nodes).sort();
+    if (nodeArr.length === 0) return;
+    
+    // Compute positions (circular layout)
+    const positions = {};
+    const cx = width / 2;
+    const cy = height / 2;
+    const r = Math.min(width, height) / 2 - 40;
+    
+    nodeArr.forEach((node, i) => {
+        const theta = (i * 2 * Math.PI) / nodeArr.length - Math.PI / 2;
+        positions[node] = {
+            x: cx + r * Math.cos(theta),
+            y: cy + r * Math.sin(theta)
+        };
+    });
+    
+    ctx.clearRect(0, 0, width, height);
+    
+    const pathEdges = new Set();
+    if (path && path.length > 1) {
+        for (let i = 0; i < path.length - 1; i++) {
+            pathEdges.add(`${path[i]}->${path[i+1]}`);
+            pathEdges.add(`${path[i+1]}->${path[i]}`); // In case of undirected matching for highlights
+        }
+    }
+    
+    const isDirected = document.getElementById('graph-direction') ? document.getElementById('graph-direction').value === 'directed' : false;
+    const drawnUndirectedEdges = new Set();
+
+    function drawEdge(u, v, weight, isPath) {
+        if (!isDirected) {
+            const edgeKey = [u, v].sort().join('-');
+            if (drawnUndirectedEdges.has(edgeKey)) return;
+            drawnUndirectedEdges.add(edgeKey);
+        }
+
+        const p1 = positions[u];
+        const p2 = positions[v];
+        if (!p1 || !p2) return;
+        
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = isPath ? '#00e5ff' : 'rgba(107,107,128,0.3)';
+        ctx.lineWidth = isPath ? 3 : 1.5;
+        ctx.stroke();
+        
+        if (isDirected) {
+            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            const headlen = 10;
+            const targetX = p2.x - 18 * Math.cos(angle);
+            const targetY = p2.y - 18 * Math.sin(angle);
+            
+            ctx.beginPath();
+            ctx.moveTo(targetX, targetY);
+            ctx.lineTo(targetX - headlen * Math.cos(angle - Math.PI/6), targetY - headlen * Math.sin(angle - Math.PI/6));
+            ctx.lineTo(targetX - headlen * Math.cos(angle + Math.PI/6), targetY - headlen * Math.sin(angle + Math.PI/6));
+            ctx.fillStyle = isPath ? '#00e5ff' : 'rgba(107,107,128,0.6)';
+            ctx.fill();
+        }
+        
+        if (weight !== undefined && weight !== null) {
+            const mx = (p1.x + p2.x) / 2;
+            const my = (p1.y + p2.y) / 2;
+            ctx.fillStyle = '#0d0d14';
+            ctx.fillRect(mx - 8, my - 8, 16, 16);
+            ctx.fillStyle = isPath ? '#f59e0b' : '#e8e8f0';
+            ctx.font = '11px DM Mono, monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(weight, mx, my + 1);
+        }
+    }
+    
+    for (let u in graph) {
+        if (isWeighted) {
+            for (let v in graph[u]) {
+                if (!pathEdges.has(`${u}->${v}`)) drawEdge(u, v, graph[u][v], false);
+            }
+        } else {
+            for (let v of graph[u]) {
+                if (!pathEdges.has(`${u}->${v}`)) drawEdge(u, v, null, false);
+            }
+        }
+    }
+    
+    for (let u in graph) {
+        if (isWeighted) {
+            for (let v in graph[u]) {
+                if (pathEdges.has(`${u}->${v}`)) drawEdge(u, v, graph[u][v], true);
+            }
+        } else {
+            for (let v of graph[u]) {
+                if (pathEdges.has(`${u}->${v}`)) drawEdge(u, v, null, true);
+            }
+        }
+    }
+    
+    const pathNodes = new Set(path || []);
+    for (let node of nodeArr) {
+        const p = positions[node];
+        const isPath = pathNodes.has(node);
+        
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 18, 0, Math.PI * 2);
+        ctx.fillStyle = isPath ? 'rgba(0,229,255,0.15)' : '#18181f';
+        ctx.fill();
+        ctx.strokeStyle = isPath ? '#00e5ff' : '#6b6b80';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.fillStyle = isPath ? '#00e5ff' : '#e8e8f0';
+        ctx.font = 'bold 14px DM Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(node, p.x, p.y + 1);
+    }
+    
+    if (path && path.length > 0) {
+        const sNode = path[0];
+        const sP = positions[sNode];
+        if (sP) {
+            ctx.fillStyle = '#10b981';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('START', sP.x, sP.y - 28);
+        }
+        const gNode = path[path.length - 1];
+        const gP = positions[gNode];
+        if (gP && sNode !== gNode) {
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('GOAL', gP.x, gP.y - 28);
+        }
+    }
+}
+
+function runDFS(jsGraph, start, goal) {
+  if (!jsGraph[start] || !jsGraph[goal]) return null;
+  if (start === goal) return [start];
+  let stack = [[start, [start]]];
+  let visited = new Set();
+  while (stack.length > 0) {
+    let pop = stack.pop();
+    let current = pop[0], path = pop[1];
+    if (!visited.has(current)) {
+      visited.add(current);
+      let neighbors = jsGraph[current] || [];
+      for (let i = neighbors.length - 1; i >= 0; i--) {
+        let neighbor = neighbors[i];
+        if (!visited.has(neighbor)) {
+          if (neighbor === goal) return path.concat([neighbor]);
+          stack.push([neighbor, path.concat([neighbor])]);
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function runDijkstra(jsWeightedGraph, start, goal) {
+  if (!jsWeightedGraph[start] || !jsWeightedGraph[goal]) return {path: null, cost: Infinity};
+  let pq = [[0, start, [start]]];
+  let minCosts = { [start]: 0 };
+  let visited = new Set();
+  while (pq.length > 0) {
+    pq.sort((a, b) => a[0] - b[0]);
+    let shift = pq.shift();
+    let cost = shift[0], current = shift[1], path = shift[2];
+    if (current === goal) return {path, cost};
+    if (visited.has(current)) continue;
+    visited.add(current);
+    let neighbors = jsWeightedGraph[current] || {};
+    for (let neighbor in neighbors) {
+      if (visited.has(neighbor)) continue;
+      let newCost = cost + neighbors[neighbor];
+      if (!(neighbor in minCosts) || newCost < minCosts[neighbor]) {
+        minCosts[neighbor] = newCost;
+        pq.push([newCost, neighbor, path.concat([neighbor])]);
+      }
+    }
+  }
+  return {path: null, cost: Infinity};
+}
+
+function runBestFirst(jsGraph, jsHeuristics, start, goal) {
+  if (!jsGraph[start] || !jsGraph[goal]) return null;
+  let pq = [[(jsHeuristics[start] !== undefined ? jsHeuristics[start] : Infinity), start, [start]]];
+  let visited = new Set();
+  while (pq.length > 0) {
+    pq.sort((a, b) => a[0] - b[0]);
+    let shift = pq.shift();
+    let h = shift[0], current = shift[1], path = shift[2];
+    if (current === goal) return path;
+    if (visited.has(current)) continue;
+    visited.add(current);
+    for (let neighbor of jsGraph[current] || []) {
+      if (!visited.has(neighbor)) {
+        pq.push([(jsHeuristics[neighbor] !== undefined ? jsHeuristics[neighbor] : Infinity), neighbor, path.concat([neighbor])]);
+      }
+    }
+  }
+  return null;
+}
+
 async function runTraversal() {
-  const code = document.getElementById('trav-code').value.trim();
-  if (!code) { alert('Please enter some traversal script code.'); return; }
+  let parsedGraph = {};
+  let parsedHeuristics = {};
+  
+  const isDirected = document.getElementById('graph-direction') ? document.getElementById('graph-direction').value === 'directed' : false;
+
+  document.querySelectorAll('#edge-list .builder-row').forEach(row => {
+     let u = row.querySelector('.edge-u').value.trim().toUpperCase();
+     let v = row.querySelector('.edge-v').value.trim().toUpperCase();
+     let w = row.querySelector('.edge-w').value;
+     if (!u || !v) return;
+     if (currentTraversalAlg === 'dijkstra') {
+         if (!parsedGraph[u]) parsedGraph[u] = {};
+         parsedGraph[u][v] = parseFloat(w) || 0;
+         if (!isDirected) {
+             if (!parsedGraph[v]) parsedGraph[v] = {};
+             parsedGraph[v][u] = parseFloat(w) || 0;
+         }
+     } else {
+         if (!parsedGraph[u]) parsedGraph[u] = [];
+         if (!parsedGraph[u].includes(v)) parsedGraph[u].push(v);
+         if (!parsedGraph[v]) parsedGraph[v] = []; // initialize destination node too for safety
+         if (!isDirected) {
+             if (!parsedGraph[v].includes(u)) parsedGraph[v].push(u);
+         }
+     }
+  });
+
+  if (currentTraversalAlg === 'bestfirst') {
+      document.querySelectorAll('#heuristic-list .builder-row').forEach(row => {
+         let n = row.querySelector('.heur-node').value.trim().toUpperCase();
+         let val = row.querySelector('.heur-val').value;
+         if (n) parsedHeuristics[n] = parseFloat(val) || 0;
+      });
+  }
+
+  const startNodeEl = document.getElementById('trav-start');
+  const goalNodeEl = document.getElementById('trav-goal');
+  const startNode = startNodeEl ? startNodeEl.value.trim().toUpperCase() : 'A';
+  const goalNode = goalNodeEl ? goalNodeEl.value.trim().toUpperCase() : 'F';
+
+  if (!startNode || !goalNode) {
+    alert('Please enter both Start Node and Goal Node.');
+    return;
+  }
+  
+  if (Object.keys(parsedGraph).length === 0) {
+    alert('Please define at least one valid edge in the graph.');
+    return;
+  }
 
   document.getElementById('trav-spinner').style.display = 'flex';
   document.getElementById('trav-output').innerHTML = '<div style="color:var(--muted); font-size:12px;">Simulating graph traversal...</div>';
 
   await new Promise(r => setTimeout(r, 500));
   
-  let output = '';
   let summary = '';
+  let path = null;
+  let cost = undefined;
   
-  if (code.includes('bfs_path')) {
+  if (currentTraversalAlg === 'bfs') {
     summary = 'Breadth-First Search Algorithm';
-    output = `Graph: {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'], 'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']}
-
-Finding path from A to F...
-Path found: A -> C -> F
-
-Finding path from D to C...
-Path found: D -> B -> A -> C
-
-Finding path from A to Z (non-existent node)...
-No path found.`;
-  } else if (code.includes('dfs_path')) {
+    path = runBFS(parsedGraph, startNode, goalNode);
+  } else if (currentTraversalAlg === 'dfs') {
     summary = 'Depth-First Search Algorithm';
-    output = `Graph: {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'], 'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']}
-
-Finding path from A to F using DFS...
-Path found: A -> B -> E -> F
-
-Finding path from D to C...
-Path found: D -> B -> A -> C
-
-Finding path from A to Z (non-existent node)...
-No path found.`;
-  } else if (code.includes('dijkstra_path')) {
+    path = runDFS(parsedGraph, startNode, goalNode);
+  } else if (currentTraversalAlg === 'dijkstra') {
     summary = "Dijkstra's Shortest Path Algorithm";
-    output = `Weighted Graph: {'A': {'B': 1, 'C': 4}, 'B': {'A': 1, 'D': 2, 'E': 5}, 'C': {'A': 4, 'F': 3}, 'D': {'B': 2}, 'E': {'B': 5, 'F': 1}, 'F': {'C': 3, 'E': 1}}
-
-Finding shortest path from A to F using Dijkstra's Algorithm...
-Path found: A -> C -> F
-Total Cost: 7
-
-Finding path from D to C...
-Path found: D -> B -> A -> C
-Total Cost: 7
-
-Finding path from A to Z (non-existent node)...
-No path found.`;
-  } else if (code.includes('best_first_search_path')) {
+    let res = runDijkstra(parsedGraph, startNode, goalNode);
+    path = res.path;
+    cost = res.cost;
+  } else if (currentTraversalAlg === 'bestfirst') {
     summary = 'Greedy Best-First Search Algorithm';
-    output = `Graph: {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'], 'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']}
-Heuristics: {'A': 5, 'B': 4, 'C': 2, 'D': 6, 'E': 1, 'F': 0}
-
-Finding path from A to F using Greedy Best-First Search...
-Path found: A -> C -> F
-
-Finding path from D to C...
-Path found: D -> B -> A -> C`;
-  } else {
-    // generic fallback
-    summary = 'Custom Script Evaluation';
-    output = `Simulated terminal output:
-Code successfully parsed and heuristic structure analyzed. No specific traversal path algorithm detected (Ensure naming matches bfs_path, dfs_path, dijkstra_path, or best_first_search_path).
-`;
+    path = runBestFirst(parsedGraph, parsedHeuristics, startNode, goalNode);
   }
   
   document.getElementById('trav-summary').textContent = summary;
   
-  // Create stylized output blocks mimicking the terminal execution but cleaner
-  const formattedOutput = output.split('\n\n').map(block => {
-    return `<div style="margin-bottom: 16px;">${escapeHtml(block)}</div>`;
-  }).join('');
+  let outputHtml = '';
+  if (path) {
+     const pathNodes = path.map(n => `<span style="background:var(--accent); color:#000; padding:4px 10px; border-radius:6px; font-weight:bold;">${n}</span>`).join('<span style="color:var(--muted); padding:0 8px;">⟶</span>');
+     
+     outputHtml = `
+      <div style="margin-bottom: 16px; font-size: 13px; color: var(--text);">Optimal path found from <strong>${startNode}</strong> to <strong>${goalNode}</strong>:</div>
+      <div style="font-size: 16px; padding: 16px; background: rgba(0,229,255,0.05); border: 1px solid rgba(0,229,255,0.2); border-radius: 8px; display:inline-block;">
+         ${pathNodes}
+      </div>
+     `;
+     if (cost !== undefined && cost !== Infinity) {
+         outputHtml += `<div style="margin-top: 16px; font-size: 13px; color: var(--accent3);"><strong>Total Cost / Weight:</strong> ${cost}</div>`;
+     }
+  } else {
+     outputHtml = `
+      <div style="padding: 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: var(--danger); font-size: 13px;">
+         No valid path exists from <strong>${startNode}</strong> to <strong>${goalNode}</strong> in this graph structure.
+      </div>`;
+  }
   
-  document.getElementById('trav-output').innerHTML = `<div><strong style="color:var(--accent);">✓ Execution Complete</strong><br><br>${formattedOutput}</div>`;
+  document.getElementById('trav-output').innerHTML = `
+    <div><strong style="color:var(--success);">✓ Traversal Complete</strong><br><br>${outputHtml}</div>
+    <div style="margin-top:24px; text-align:center;">
+        <canvas id="graph-sim-canvas" width="600" height="400" style="width:100%; max-width:600px; height:auto; background:#111118; border:1px solid var(--border); border-radius:12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);"></canvas>
+    </div>
+  `;
   document.getElementById('trav-spinner').style.display = 'none';
+
+  setTimeout(() => {
+      drawGraphSimulator('graph-sim-canvas', parsedGraph, path, currentTraversalAlg === 'dijkstra');
+  }, 50);
 }
+
+// Initial mode load
+setTimeout(() => setAlgorithmMode('bfs', document.querySelector('.alg-btn')), 300);

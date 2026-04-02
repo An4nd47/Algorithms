@@ -351,16 +351,48 @@ def bubble_sort(lst):
         <!-- Input -->
         <div class="panel">
           <div class="panel-header">
-            <div class="panel-title">Python Code</div>
+            <div class="panel-title">Graph Structure Input</div>
             <div style="display:flex; gap:8px;">
-              <button class="btn btn-ghost" onclick="loadTraversalExample('bfs')" style="padding:5px 10px; font-size:11px;">BFS</button>
-              <button class="btn btn-ghost" onclick="loadTraversalExample('dfs')" style="padding:5px 10px; font-size:11px;">DFS</button>
-              <button class="btn btn-ghost" onclick="loadTraversalExample('dijkstra')" style="padding:5px 10px; font-size:11px;">Dijkstra</button>
-              <button class="btn btn-ghost" onclick="loadTraversalExample('bestfirst')" style="padding:5px 10px; font-size:11px;">Best-First</button>
+              <button class="btn btn-ghost alg-btn active" onclick="setAlgorithmMode('bfs', this)" style="padding:5px 10px; font-size:11px;">BFS</button>
+              <button class="btn btn-ghost alg-btn" onclick="setAlgorithmMode('dfs', this)" style="padding:5px 10px; font-size:11px;">DFS</button>
+              <button class="btn btn-ghost alg-btn" onclick="setAlgorithmMode('dijkstra', this)" style="padding:5px 10px; font-size:11px;">Dijkstra</button>
+              <button class="btn btn-ghost alg-btn" onclick="setAlgorithmMode('bestfirst', this)" style="padding:5px 10px; font-size:11px;">Best-First</button>
             </div>
           </div>
           <div class="panel-body">
-            <textarea id="trav-code" placeholder="Select a traversal algorithm above to view Python code…" style="min-height:350px; font-family: var(--font-code); font-size: 13px;"></textarea>
+            <div id="dynamic-graph-ui">
+              <div class="input-label" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                <span>Graph Edges</span>
+                <select id="graph-direction" style="width:auto; padding: 2px 24px 2px 8px; font-size:10px; height:auto; background:var(--surface2); border-color:var(--border);" onchange="handleGraphDirectionChange()">
+                  <option value="directed">Directed ⟶</option>
+                  <option value="undirected" selected>Undirected ⟷</option>
+                </select>
+              </div>
+              <div id="edge-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;"></div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-ghost" onclick="addEdgeRow()" style="font-size:11px; padding:6px 12px;">+ Add Edge</button>
+                <button class="btn btn-ghost" onclick="clearEdgesList()" style="font-size:11px; padding:6px 12px; border-color: rgba(239,68,68,0.3); color: var(--danger);">Clear Edges</button>
+              </div>
+            </div>
+            
+            <div id="dynamic-heuristics-ui" style="display:none; margin-top:24px;">
+              <div class="input-label" style="margin-bottom:8px;">Heuristics (Only Best-First)</div>
+              <div id="heuristic-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;"></div>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-ghost" onclick="addHeuristicRow()" style="font-size:11px; padding:6px 12px;">+ Add Heuristic</button>
+                <button class="btn btn-ghost" onclick="clearHeuristicsList()" style="font-size:11px; padding:6px 12px; border-color: rgba(239,68,68,0.3); color: var(--danger);">Clear Heuristics</button>
+              </div>
+            </div>
+            <div class="input-row" style="margin-top: 16px; margin-bottom: 16px;">
+              <div class="input-group">
+                <div class="input-label">Start Node</div>
+                <input type="text" id="trav-start" value="A" maxlength="1" style="text-transform: uppercase;" />
+              </div>
+              <div class="input-group">
+                <div class="input-label">Goal Node</div>
+                <input type="text" id="trav-goal" value="F" maxlength="1" style="text-transform: uppercase;" />
+              </div>
+            </div>
             <div class="btn-row">
               <button class="btn btn-primary" onclick="runTraversal()">▶ Run Pathfinding</button>
               <button class="btn btn-ghost" onclick="clearTraversal()">Clear</button>

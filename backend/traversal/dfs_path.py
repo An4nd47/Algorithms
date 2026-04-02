@@ -1,3 +1,5 @@
+import ast
+
 def dfs_path(graph, start, goal):
     """
     Find a path from start to goal in a graph using Depth-First Search (DFS).
@@ -45,20 +47,19 @@ def dfs_path(graph, start, goal):
     return None
 
 def main():
-    # Sample Graph represented as an adjacency list
-    graph = {
-        'A': ['B', 'C'],
-        'B': ['A', 'D', 'E'],
-        'C': ['A', 'F'],
-        'D': ['B'],
-        'E': ['B', 'F'],
-        'F': ['C', 'E']
-    }
+    print("Example Graph: {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'], 'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']}")
+    graph_input = input("Enter graph structure as a Python dictionary: ").strip()
+    try:
+        graph = ast.literal_eval(graph_input)
+    except Exception as e:
+        print(f"Invalid graph structure provided: {e}")
+        return
     
     print("Graph:", graph)
     
-    start_node = 'A'
-    goal_node = 'F'
+    start_node = input("\nEnter start node (e.g., A): ").strip()
+    goal_node = input("Enter goal node (e.g., F): ").strip()
+    
     print(f"\nFinding path from {start_node} to {goal_node} using DFS...")
     path = dfs_path(graph, start_node, goal_node)
     
@@ -66,20 +67,6 @@ def main():
         print(f"Path found: {' -> '.join(path)}")
     else:
         print(f"No path found from {start_node} to {goal_node}.")
-
-    print(f"\nFinding path from D to C...")
-    path = dfs_path(graph, 'D', 'C')
-    if path:
-        print(f"Path found: {' -> '.join(path)}")
-    else:
-        print(f"No path found.")
-        
-    print(f"\nFinding path from A to Z (non-existent node)...")
-    path = dfs_path(graph, 'A', 'Z')
-    if path:
-        print(f"Path found: {' -> '.join(path)}")
-    else:
-        print(f"No path found.")
 
 if __name__ == "__main__":
     main()

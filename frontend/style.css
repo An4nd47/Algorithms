@@ -365,6 +365,15 @@
   }
   .btn-purple:hover { background: #8b5cf6; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,58,237,0.4); }
 
+  .alg-btn { transition: all 0.3s ease; }
+  .alg-btn.active {
+    background: rgba(0,229,255,0.1) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 0 12px rgba(0,229,255,0.3), inset 0 0 8px rgba(0,229,255,0.1);
+    text-shadow: 0 0 8px rgba(0,229,255,0.5);
+  }
+
   .btn-row { display: flex; gap: 10px; margin-top: 16px; align-items: center; }
 
   /* Results panel */
@@ -448,6 +457,45 @@
     background: rgba(0,229,255,0.1);
     border-color: var(--accent);
     color: var(--accent);
+  }
+
+  /* ── Dynamic Edge/Heuristic Builder ── */
+  .builder-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .builder-row input {
+    width: 60px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .builder-row .weight-input {
+    width: 80px;
+    display: none;
+  }
+  .builder-row .btn-remove {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--danger);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    line-height: 1;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .builder-row .btn-remove:hover { 
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: scale(1.05);
+  }
+  .builder-arrow {
+    color: var(--muted);
+    font-size: 14px;
   }
 
   /* ── Recursive analysis results ── */

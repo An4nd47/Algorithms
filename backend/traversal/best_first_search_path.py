@@ -1,3 +1,4 @@
+import ast
 import heapq
 
 def best_first_search_path(graph, heuristics, start, goal):
@@ -42,44 +43,31 @@ def best_first_search_path(graph, heuristics, start, goal):
     return None
 
 def main():
-    # Sample Graph represented as an adjacency list
-    graph = {
-        'A': ['B', 'C'],
-        'B': ['A', 'D', 'E'],
-        'C': ['A', 'F'],
-        'D': ['B'],
-        'E': ['B', 'F'],
-        'F': ['C', 'E']
-    }
-    
-    # Heuristics: Estimated straight-line distance to goal 'F'
-    heuristics = {
-        'A': 5,
-        'B': 4,
-        'C': 2, # C is closer to F than A and B
-        'D': 6,
-        'E': 1, # E is right next to F
-        'F': 0
-    }
+    print("Example Graph: {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], 'C': ['A', 'F'], 'D': ['B'], 'E': ['B', 'F'], 'F': ['C', 'E']}")
+    graph_input = input("Enter graph structure as a Python dictionary: ").strip()
+    try:
+        graph = ast.literal_eval(graph_input)
+    except Exception as e:
+        print(f"Invalid graph structure provided: {e}")
+        return
+        
+    print("\nExample Heuristics: {'A': 5, 'B': 4, 'C': 2, 'D': 6, 'E': 1, 'F': 0}")
+    heuristics_input = input("Enter heuristics as a Python dictionary: ").strip()
+    try:
+        heuristics = ast.literal_eval(heuristics_input)
+    except Exception as e:
+        print(f"Invalid heuristics structure provided: {e}")
+        return
     
     print("Graph:", graph)
     print("Heuristics:", heuristics)
     
-    start_node = 'A'
-    goal_node = 'F'
+    start_node = input("\nEnter start node (e.g., A): ").strip()
+    goal_node = input("Enter goal node (e.g., F): ").strip()
+    
     print(f"\nFinding path from {start_node} to {goal_node} using Greedy Best-First Search...")
     path = best_first_search_path(graph, heuristics, start_node, goal_node)
     
-    if path:
-        print(f"Path found: {' -> '.join(path)}")
-    else:
-        print(f"No path found.")
-
-    print(f"\nFinding path from D to C...")
-    # NOTE: Since the heuristic is hardcoded for 'F', running it for goal 'C'
-    # with these heuristics won't be optimal, but it will still traverse 
-    # based on the priority of nodes closest to F.
-    path = best_first_search_path(graph, heuristics, 'D', 'C')
     if path:
         print(f"Path found: {' -> '.join(path)}")
     else:

@@ -1,3 +1,4 @@
+import ast
 import heapq
 
 def dijkstra_path(graph, start, goal):
@@ -52,37 +53,22 @@ def dijkstra_path(graph, start, goal):
     return None, float('inf')
 
 def main():
-    # Sample Weighted Graph
-    graph = {
-        'A': {'B': 1, 'C': 4},
-        'B': {'A': 1, 'D': 2, 'E': 5},
-        'C': {'A': 4, 'F': 3},
-        'D': {'B': 2},
-        'E': {'B': 5, 'F': 1},
-        'F': {'C': 3, 'E': 1}
-    }
+    print("Example Weighted Graph: {'A': {'B': 1, 'C': 4}, 'B': {'A': 1, 'D': 2, 'E': 5}, 'C': {'A': 4, 'F': 3}, 'D': {'B': 2}, 'E': {'B': 5, 'F': 1}, 'F': {'C': 3, 'E': 1}}")
+    graph_input = input("Enter graph structure as a Python dictionary: ").strip()
+    try:
+        graph = ast.literal_eval(graph_input)
+    except Exception as e:
+        print(f"Invalid graph structure provided: {e}")
+        return
     
     print("Weighted Graph:", graph)
     
-    start_node = 'A'
-    goal_node = 'F'
+    start_node = input("\nEnter start node (e.g., A): ").strip()
+    goal_node = input("Enter goal node (e.g., F): ").strip()
+    
     print(f"\nFinding shortest path from {start_node} to {goal_node} using Dijkstra's Algorithm...")
     path, cost = dijkstra_path(graph, start_node, goal_node)
     
-    if path:
-        print(f"Path found: {' -> '.join(path)}\nTotal Cost: {cost}")
-    else:
-        print(f"No path found.")
-
-    print(f"\nFinding path from D to C...")
-    path, cost = dijkstra_path(graph, 'D', 'C')
-    if path:
-        print(f"Path found: {' -> '.join(path)}\nTotal Cost: {cost}")
-    else:
-        print(f"No path found.")
-
-    print(f"\nFinding path from A to Z (non-existent node)...")
-    path, cost = dijkstra_path(graph, 'A', 'Z')
     if path:
         print(f"Path found: {' -> '.join(path)}\nTotal Cost: {cost}")
     else:
