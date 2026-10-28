@@ -44,6 +44,11 @@
         <div class="icon">🕸️</div>
         Graph Traversals
       </div>
+      <div class="nav-item" data-page="tsp">
+        <div class="icon">🗺️</div>
+        Traveling Salesman
+        <span class="nav-badge">NEW</span>
+      </div>
     </nav>
 
     <div class="sidebar-footer">
@@ -410,6 +415,74 @@ def bubble_sort(lst):
           <div id="trav-output" style="padding:16px; background:var(--surface); border: 1px solid var(--border); border-top:none; border-radius: 0 0 16px 16px; min-height: 200px; font-family: var(--font-code); font-size: 13px; white-space: pre-wrap; color: var(--text);">
             <div class="result-placeholder" style="margin-top:80px; text-align:center; color:var(--muted); font-size:12px;">Run a pathfinding strategy to see results.</div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ TRAVELLING SALESMAN PROBLEM ═══════════ -->
+    <div class="page" id="page-tsp">
+      <div class="section-head">
+          <div class="section-title">Traveling Salesman Problem (TSP)</div>
+          <div class="section-line"></div>
+      </div>
+
+      <div class="tool-layout">
+        <!-- Input Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">Graph Input</div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost" onclick="loadTSPExample('simple')" style="padding:5px 10px; font-size:11px;">Simple 3 Cities</button>
+                    <button class="btn btn-ghost" onclick="loadTSPExample('medium')" style="padding:5px 10px; font-size:11px;">5 Cities</button>
+                    <button class="btn btn-ghost" onclick="loadTSPExample('euclidean')" style="padding:5px 10px; font-size:11px;">Euclidean 6</button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="input-label" style="margin-bottom:8px; display:flex; justify-content:space-between;">
+                    <span>City Labels</span>
+                    <span style="font-size:9px; color:var(--muted);">(comma-separated, e.g., A,B,C,D)</span>
+                </div>
+                <input type="text" id="tsp-nodes" value="A,B,C,D,E" placeholder="A,B,C,D,E" style="margin-bottom:16px;" />
+
+                <div class="input-label" style="margin-bottom:8px;">Distance Edges</div>
+                <div id="tsp-edge-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;"></div>
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+                    <button class="btn btn-ghost" onclick="addTSPEdgeRow()" style="font-size:11px; padding:6px 12px;">+ Add Edge</button>
+                    <button class="btn btn-ghost" onclick="clearTSPEdges()" style="font-size:11px; padding:6px 12px; border-color: rgba(239,68,68,0.3); color: var(--danger);">Clear Edges</button>
+                    <button class="btn btn-ghost" onclick="loadTSPCompleteGraph()" style="font-size:11px; padding:6px 12px;">⟳ Complete Graph</button>
+                </div>
+
+                <div class="input-label" style="margin-bottom:8px;">Solver Options</div>
+                <div class="transform-toggle" style="margin-bottom:16px;">
+                    <button class="toggle-btn active" data-solver="exact" onclick="setTSPSolver('exact', this)">Held-Karp (Exact)</button>
+                    <button class="toggle-btn" data-solver="heuristic" onclick="setTSPSolver('heuristic', this)">Nearest Neighbor (Heuristic)</button>
+                </div>
+
+                <div id="tsp-heuristic-options" style="display:none; margin-bottom:16px;">
+                    <div class="input-group">
+                        <div class="input-label">Start City (for heuristic)</div>
+                        <input type="text" id="tsp-start-city" value="A" maxlength="1" style="text-transform: uppercase;" />
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn btn-primary" onclick="runTSP()">▶ Solve TSP</button>
+                    <button class="btn btn-ghost" onclick="clearTSP()">Clear</button>
+                    <div id="tsp-spinner" style="display:none;"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div>
+            <div class="panel-header" style="background: var(--surface2); border: 1px solid var(--border); border-radius: 16px 16px 0 0; padding: 16px 20px;">
+                <div class="panel-title">TSP Results</div>
+                <div id="tsp-summary" style="font-size:11px; color:var(--muted);">—</div>
+            </div>
+            <div id="tsp-output" style="padding:16px; background:var(--surface); border: 1px solid var(--border); border-top:none; border-radius: 0 0 16px 16px; min-height: 200px; font-family: var(--font-code); font-size: 13px; white-space: pre-wrap; color: var(--text);">
+                <div class="result-placeholder" style="margin-top:80px; text-align:center; color:var(--muted); font-size:12px;">Configure graph and run TSP solver.</div>
+            </div>
         </div>
       </div>
     </div>

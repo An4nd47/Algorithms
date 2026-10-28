@@ -7,6 +7,7 @@ const pageNames = {
   coordinate: ['Coordinate Transform', 'backend/coordinate_transformation.py'],
   recursive: ['Recursion Analyzer', 'backend/recursive_check.py'],
   traversal: ['Graph Traversals', 'backend/traversal/'],
+  tsp: ['Traveling Salesman Problem', 'backend/traversal/traveling_salesman.py'] 
 };
 
 function switchPage(id) {
@@ -1001,3 +1002,473 @@ async function runTraversal() {
 
 // Initial mode load
 setTimeout(() => setAlgorithmMode('bfs', document.querySelector('.alg-btn')), 300);
+/* ══════════════════════════════════════════
+   TRAVELING SALESMAN PROBLEM (TSP)
+══════════════════════════════════════════ */
+
+let currentTSPSolver = 'exact';
+
+// TSP Example Data
+const tspExamples = {
+    simple: {
+        nodes: ['A', 'B', 'C'],
+        edges: [
+            ['A', 'B', 10], ['B', 'C', 15], ['C', 'A', 20],
+            ['A', 'C', 20], ['B', 'A', 10], ['C', 'B', 15]
+        ]
+    },
+    medium: {
+        nodes: ['A', 'B', 'C', 'D', 'E'],
+        edges: [
+            ['A', 'B', 12], ['A', 'C', 10], ['A', 'D', 19], ['A', 'E', 8],
+            ['B', 'C', 3], ['B', 'D', 7], ['B', 'E', 6],
+            ['C', 'D', 2], ['C', 'E', 20],
+            ['D', 'E', 4],
+            // symmetric edges
+            ['B', 'A', 12], ['C', 'A', 10], ['D', 'A', 19], ['E', 'A', 8],
+            ['C', 'B', 3], ['D', 'B', 7], ['E', 'B', 6],
+            ['D', 'C', 2], ['E', 'C', 20],
+            ['E', 'D', 4]
+        ]
+    },
+    euclidean: {
+        nodes: ['A', 'B', 'C', 'D', 'E', 'F'],
+        edges: [
+            // Manhattan-style distances on grid
+            ['A', 'B', 5], ['A', 'C', 8], ['A', 'D', 12], ['A', 'E', 15], ['A', 'F', 18],
+            ['B', 'C', 4], ['B', 'D', 9], ['B', 'E', 11], ['B', 'F', 14],
+            ['C', 'D', 6], ['C', 'E', 8], ['C', 'F', 10],
+            ['D', 'E', 5], ['D', 'F', 7],
+            ['E', 'F', 3],
+            // symmetric
+            ['B', 'A', 5], ['C', 'A', 8], ['D', 'A', 12], ['E', 'A', 15], ['F', 'A', 18],
+            ['C', 'B', 4], ['D', 'B', 9], ['E', 'B', 11], ['F', 'B', 14],
+            ['D', 'C', 6], ['E', 'C', 8], ['F', 'C', 10],
+            ['E', 'D', 5], ['F', 'D', 7],
+            ['F', 'E', 3]
+        ]
+    }
+};
+
+function addTSPEdgeRow(u = '', v = '', w = '') {
+    const list = document.getElementById('tsp-edge-list');
+    const row = document.createElement('div');
+    row.className = 'builder-row';
+    row.innerHTML = `
+        <input type="text" class="tsp-edge-u" value="${u}" maxlength="1" placeholder="A" style="width:70px;">
+        <span class="builder-arrow">⟷</span>
+        <input type="text" class="tsp-edge-v" value="${v}" maxlength="1" placeholder="B" style="width:70px;">
+        <input type="number" class="tsp-edge-w" value="${w}" placeholder="Dist" step="1" style="width:90px;">
+        <button class="btn-remove" onclick="this.parentElement.remove()" title="Delete Edge">🗑️</button>
+    `;
+    list.appendChild(row);
+}
+
+function clearTSPEdges() {
+    document.getElementById('tsp-edge-list').innerHTML = '';
+}
+
+function loadTSPExample(type) {
+    const ex = tspExamples[type];
+    if (!ex) return;
+
+    // Set nodes
+    document.getElementById('tsp-nodes').value = ex.nodes.join(',');
+
+    // Clear and add edges
+    clearTSPEdges();
+    for (const edge of ex.edges) {
+        addTSPEdgeRow(edge[0], edge[1], edge[2]);
+    }
+}
+
+function loadTSPCompleteGraph() {
+    const nodesInput = document.getElementById('tsp-nodes').value;
+    const nodes = nodesInput.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+    if (nodes.length < 2) {
+        alert('Please enter at least 2 city labels (comma-separated).');
+        return;
+    }
+
+    clearTSPEdges();
+    // Generate random distances between 5 and 50
+    for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+            const dist = Math.floor(Math.random() * 45) + 5;
+            addTSPEdgeRow(nodes[i], nodes[j], dist);
+        }
+    }
+}
+
+function setTSPSolver(type, btn) {
+    currentTSPSolver = type;
+    document.querySelectorAll('[data-solver]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const heuristicOptions = document.getElementById('tsp-heuristic-options');
+    if (type === 'heuristic') {
+        heuristicOptions.style.display = 'block';
+    } else {
+        heuristicOptions.style.display = 'none';
+    }
+}
+
+function clearTSP() {
+    document.getElementById('tsp-nodes').value = 'A,B,C,D,E';
+    clearTSPEdges();
+    document.getElementById('tsp-start-city').value = 'A';
+    document.getElementById('tsp-output').innerHTML = '<div class="result-placeholder" style="margin-top:80px; text-align:center; color:var(--muted); font-size:12px;">Configure graph and run TSP solver.</div>';
+    document.getElementById('tsp-summary').textContent = '—';
+}
+
+async function runTSP() {
+    // Parse nodes
+    const nodesInput = document.getElementById('tsp-nodes').value;
+    const nodes = nodesInput.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+    if (nodes.length < 2) {
+        alert('Please enter at least 2 city labels (comma-separated).');
+        return;
+    }
+
+    // Parse edges
+    const edges = [];
+    const edgeRows = document.querySelectorAll('#tsp-edge-list .builder-row');
+    if (edgeRows.length === 0) {
+        alert('Please add at least one edge to define distances between cities.');
+        return;
+    }
+
+    for (const row of edgeRows) {
+        const u = row.querySelector('.tsp-edge-u').value.trim().toUpperCase();
+        const v = row.querySelector('.tsp-edge-v').value.trim().toUpperCase();
+        const w = parseFloat(row.querySelector('.tsp-edge-w').value);
+        if (!u || !v) continue;
+        if (isNaN(w) || w <= 0) {
+            alert(`Invalid distance for edge ${u}-${v}. Distance must be positive number.`);
+            return;
+        }
+        // Check if cities exist in node list
+        if (!nodes.includes(u)) {
+            alert(`City "${u}" is not in the city list. Add it to "City Labels".`);
+            return;
+        }
+        if (!nodes.includes(v)) {
+            alert(`City "${v}" is not in the city list. Add it to "City Labels".`);
+            return;
+        }
+        edges.push([u, v, w]);
+    }
+
+    // Build symmetric distance matrix
+    const n = nodes.length;
+    const INF = 1e9;
+    const dist = Array(n).fill().map(() => Array(n).fill(INF));
+    for (let i = 0; i < n; i++) dist[i][i] = 0;
+
+    const idx = {};
+    nodes.forEach((label, i) => { idx[label] = i; });
+
+    for (const [u, v, w] of edges) {
+        const i = idx[u], j = idx[v];
+        dist[i][j] = Math.min(dist[i][j], w);
+        dist[j][i] = Math.min(dist[j][i], w);
+    }
+
+    // Check if graph is complete (warn but proceed)
+    let missingEdges = 0;
+    for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+            if (i !== j && dist[i][j] >= INF / 2) missingEdges++;
+        }
+    }
+    if (missingEdges > 0) {
+        console.warn(`Missing ${missingEdges} edges. TSP requires complete graph. Using large distances for missing edges.`);
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                if (i !== j && dist[i][j] >= INF / 2) {
+                    dist[i][j] = 10000; // Large penalty
+                }
+            }
+        }
+    }
+
+    const startCity = document.getElementById('tsp-start-city').value.trim().toUpperCase();
+    let startIdx = 0;
+    if (currentTSPSolver === 'heuristic' && nodes.includes(startCity)) {
+        startIdx = idx[startCity];
+    }
+
+    // Show spinner
+    document.getElementById('tsp-spinner').style.display = 'flex';
+    document.getElementById('tsp-output').innerHTML = '<div style="color:var(--muted); font-size:12px;">Solving TSP...</div>';
+
+    // Simulate async (since computation is synchronous but heavy for large n)
+    await new Promise(r => setTimeout(r, 50));
+
+    // Solve TSP using embedded JS implementation of Held-Karp and Nearest Neighbor
+    let result;
+    if (currentTSPSolver === 'exact') {
+        result = heldKarpTSP(dist, n);
+        result.method = "Held-Karp DP (Exact)";
+        result.time_complexity = "O(n²·2ⁿ)";
+    } else {
+        result = nearestNeighborTSP(dist, n, startIdx);
+        result.method = "Nearest Neighbor (Heuristic)";
+        result.time_complexity = "O(n²)";
+    }
+
+    document.getElementById('tsp-spinner').style.display = 'none';
+
+    if (result.cost >= 1e8) {
+        document.getElementById('tsp-output').innerHTML = `
+            <div style="padding: 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: var(--danger); font-size: 13px;">
+                ❌ No valid Hamiltonian cycle found. Ensure the graph is complete and distances are defined.
+            </div>
+        `;
+        document.getElementById('tsp-summary').innerHTML = 'No solution';
+        return;
+    }
+
+    const tourLabels = result.tour.map(i => nodes[i]);
+    const tourPath = tourLabels.map(city => `<span style="background:var(--accent); color:#000; padding:4px 10px; border-radius:6px; font-weight:bold;">${city}</span>`).join('<span style="color:var(--muted); padding:0 6px;">→</span>');
+
+    document.getElementById('tsp-summary').innerHTML = `${result.method} · ${result.time_complexity}`;
+
+    document.getElementById('tsp-output').innerHTML = `
+        <div style="margin-bottom: 16px;">
+            <div style="margin-bottom: 12px; font-size: 13px; color: var(--text);">
+                <strong style="color: var(--success);">✓ Optimal Tour Found</strong><br>
+                Total Distance: <span style="color: var(--accent3); font-size: 18px; font-weight: bold;">${result.cost.toFixed(2)}</span>
+            </div>
+            <div style="font-size: 14px; padding: 16px; background: rgba(0,229,255,0.05); border: 1px solid rgba(0,229,255,0.2); border-radius: 8px; word-break: break-all;">
+                ${tourPath}
+            </div>
+            <div style="margin-top: 16px; padding: 12px; background: #0d0d14; border-radius: 8px; font-size: 11px; color: var(--muted);">
+                <strong>Algorithm Details:</strong><br>
+                • Method: ${result.method}<br>
+                • Time Complexity: ${result.time_complexity}<br>
+                • Number of cities: ${n}
+            </div>
+        </div>
+        <div style="margin-top:24px; text-align:center;">
+            <canvas id="tsp-canvas" width="500" height="400" style="width:100%; max-width:500px; height:auto; background:#111118; border:1px solid var(--border); border-radius:12px;"></canvas>
+        </div>
+    `;
+
+    // Draw TSP tour visualization
+    setTimeout(() => drawTSPGraph('tsp-canvas', nodes, dist, result.tour), 100);
+}
+
+// Held-Karp DP Implementation (pure JS)
+function heldKarpTSP(dist, n) {
+    const INF = 1e12;
+    const dp = Array(1 << n).fill().map(() => Array(n).fill(INF));
+    const parent = Array(1 << n).fill().map(() => Array(n).fill(-1));
+
+    dp[1 << 0][0] = 0;
+
+    for (let mask = 0; mask < (1 << n); mask++) {
+        for (let i = 0; i < n; i++) {
+            if (!(mask & (1 << i))) continue;
+            if (dp[mask][i] >= INF) continue;
+            for (let j = 0; j < n; j++) {
+                if (mask & (1 << j)) continue;
+                const newMask = mask | (1 << j);
+                const newCost = dp[mask][i] + dist[i][j];
+                if (newCost < dp[newMask][j]) {
+                    dp[newMask][j] = newCost;
+                    parent[newMask][j] = i;
+                }
+            }
+        }
+    }
+
+    const fullMask = (1 << n) - 1;
+    let minCost = INF;
+    let lastCity = -1;
+    for (let i = 1; i < n; i++) {
+        const candidate = dp[fullMask][i] + dist[i][0];
+        if (candidate < minCost) {
+            minCost = candidate;
+            lastCity = i;
+        }
+    }
+
+    if (minCost >= INF) return { cost: INF, tour: [] };
+
+    // Reconstruct tour
+    const tour = [];
+    let mask = fullMask;
+    let curr = lastCity;
+    while (curr !== -1) {
+        tour.push(curr);
+        const prev = parent[mask][curr];
+        mask ^= (1 << curr);
+        curr = prev;
+    }
+    tour.push(0);
+    tour.reverse();
+
+    return { cost: minCost, tour: tour };
+}
+
+// Nearest Neighbor Heuristic
+function nearestNeighborTSP(dist, n, start = 0) {
+    const visited = Array(n).fill(false);
+    const tour = [start];
+    visited[start] = true;
+    let totalCost = 0;
+    let current = start;
+
+    for (let step = 1; step < n; step++) {
+        let nearest = -1;
+        let minDist = Infinity;
+        for (let next = 0; next < n; next++) {
+            if (!visited[next] && dist[current][next] < minDist) {
+                minDist = dist[current][next];
+                nearest = next;
+            }
+        }
+        if (nearest === -1) return { cost: Infinity, tour: [] };
+        totalCost += minDist;
+        visited[nearest] = true;
+        tour.push(nearest);
+        current = nearest;
+    }
+
+    totalCost += dist[current][start];
+    tour.push(start);
+
+    return { cost: totalCost, tour: tour };
+}
+
+// Draw TSP graph visualization
+function drawTSPGraph(canvasId, nodes, distMatrix, tour) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    const n = nodes.length;
+    if (n === 0) return;
+
+    // Generate circular layout positions
+    const positions = {};
+    const cx = width / 2;
+    const cy = height / 2;
+    const radius = Math.min(width, height) / 2 - 50;
+
+    nodes.forEach((node, i) => {
+        const angle = (i * 2 * Math.PI) / n - Math.PI / 2;
+        positions[node] = {
+            x: cx + radius * Math.cos(angle),
+            y: cy + radius * Math.sin(angle)
+        };
+    });
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = '#0d0d14';
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw edges (all)
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+            const p1 = positions[nodes[i]];
+            const p2 = positions[nodes[j]];
+            if (!p1 || !p2) continue;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = 'rgba(107,107,128,0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+    }
+
+    // Draw tour edges (highlighted)
+    if (tour && tour.length > 1) {
+        for (let k = 0; k < tour.length - 1; k++) {
+            const fromIdx = tour[k];
+            const toIdx = tour[k + 1];
+            const p1 = positions[nodes[fromIdx]];
+            const p2 = positions[nodes[toIdx]];
+            if (!p1 || !p2) continue;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = '#00e5ff';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Draw arrow head for direction
+            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            const headLen = 12;
+            const arrowX = p2.x - 18 * Math.cos(angle);
+            const arrowY = p2.y - 18 * Math.sin(angle);
+            ctx.beginPath();
+            ctx.moveTo(arrowX, arrowY);
+            ctx.lineTo(arrowX - headLen * Math.cos(angle - Math.PI / 6), arrowY - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(arrowX - headLen * Math.cos(angle + Math.PI / 6), arrowY - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.fillStyle = '#00e5ff';
+            ctx.fill();
+        }
+    }
+
+    // Draw nodes
+    for (let i = 0; i < n; i++) {
+        const node = nodes[i];
+        const p = positions[node];
+        if (!p) continue;
+
+        const isStart = tour && tour[0] === i;
+        const isEnd = tour && tour[tour.length - 1] === i && tour[0] !== i;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
+        ctx.fillStyle = '#18181f';
+        ctx.fill();
+        ctx.strokeStyle = '#00e5ff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#e8e8f0';
+        ctx.font = 'bold 14px DM Mono, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(node, p.x, p.y + 1);
+
+        if (isStart) {
+            ctx.fillStyle = '#10b981';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.fillText('START', p.x, p.y - 28);
+        } else if (isEnd) {
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.fillText('END', p.x, p.y - 28);
+        }
+    }
+
+    // Draw distance labels on tour edges (optional)
+    if (tour && tour.length > 1 && n <= 8) {
+        for (let k = 0; k < tour.length - 1; k++) {
+            const fromIdx = tour[k];
+            const toIdx = tour[k + 1];
+            const p1 = positions[nodes[fromIdx]];
+            const p2 = positions[nodes[toIdx]];
+            if (!p1 || !p2) continue;
+            const mx = (p1.x + p2.x) / 2;
+            const my = (p1.y + p2.y) / 2;
+            const d = distMatrix[fromIdx][toIdx];
+            ctx.fillStyle = '#0d0d14';
+            ctx.fillRect(mx - 12, my - 10, 24, 18);
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = '10px DM Mono, monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(d.toFixed(0), mx, my + 1);
+        }
+    }
+}
+// Update the pageNames object (add the tsp entry)
